@@ -1,7 +1,7 @@
 # compiled output
 /dist
 /build
-
+*.tsbuildinfo
 # dependencies
 /node_modules
 
