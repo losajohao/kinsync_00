@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KinSync</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="background-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+    </div>
+    
+    <div id="app" class="glass-container">
+        <!-- Pantalla de Login -->
+        <div id="login-screen" class="screen active">
+            <h1>KinSync</h1>
+            <p>Sincroniza con tu familia</p>
+            <div class="input-group">
+                <input type="text" id="username-input" placeholder="Tu nombre..." autocomplete="off">
+                <button id="join-btn">Entrar</button>
+            </div>
+        </div>
+
+        <!-- Pantalla Principal con Pestañas -->
+        <div id="main-screen" class="screen">
+            
+            <!-- Barra de Navegación de Pestañas -->
+            <div class="tabs-header">
+                <button id="tab-btn-chat" class="tab-btn active">💬 Chat Familiar</button>
+                <button id="tab-btn-hub" class="tab-btn">🧠 Hub IA</button>
+            </div>
+
+            <!-- Pestaña 1: CHAT -->
+            <div id="tab-chat" class="tab-content active">
+                <header>
+                    <h2>KinSync</h2>
+                    <span id="user-badge" class="badge"></span>
+                </header>
+                <div id="chat-box" class="chat-messages">
+                    <!-- Aquí van los mensajes -->
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" id="message-input" placeholder="Escribe un mensaje..." autocomplete="off">
+                    <button id="send-btn">Enviar</button>
+                </div>
+            </div>
+
+            <!-- Pestaña 2: IA (Resumen) -->
+            <div id="tab-hub" class="tab-content">
+                <header class="hub-header">
+                    <h2>Inteligencia</h2>
+                    <button id="btn-resumen" class="action-btn">Generar Resumen Ahora</button>
+                </header>
+                <div id="summary-box" class="summary-content">
+                    <p class="empty-state">No hay resumen activo. Analiza el chat para generarlo.</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Script de Socket.io provisto por el backend y lógica de la app -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
