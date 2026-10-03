@@ -10,7 +10,6 @@ const sendBtn = document.getElementById('send-btn');
 const chatBox = document.getElementById('chat-box');
 const userBadge = document.getElementById('user-badge');
 const summaryBox = document.getElementById('summary-box');
-const btnResumen = document.getElementById('btn-resumen');
 
 const tabBtnChat = document.getElementById('tab-btn-chat');
 const tabBtnHub = document.getElementById('tab-btn-hub');
@@ -59,36 +58,65 @@ function switchTab(showChat) {
         tabBtnChat.classList.remove('active');
         tabHub.classList.add('active');
         tabChat.classList.remove('active');
+        
+        // Magia: Al entrar a la pestaña del Hub, pedimos a la IA que lea el historial viejo automáticamente
+        // Solo lo pedimos si la caja está vacía o tiene el mensaje por defecto
+        if (summaryBox.innerHTML.includes('No hay resumen activo') || summaryBox.innerHTML.trim() === '') {
+            summaryBox.innerHTML = '<p class="empty-state">⏳ Analizando todo el historial del chat familiar...</p>';
+            socket.emit('createChat', { sender: username, content: '/resumen' });
+        }
     }
 }
 
 tabBtnChat.addEventListener('click', () => switchTab(true));
 tabBtnHub.addEventListener('click', () => switchTab(false));
 
-// --- Evento del Botón de IA ---
-btnResumen.addEventListener('click', () => {
-    // Ponemos estado de carga visual en el panel derecho
-    summaryBox.innerHTML = '<p class="empty-state">⏳ Analizando conversación...</p>';
-    // Enviamos el comando secreto por detrás
-    socket.emit('createChat', { sender: username, content: '/resumen' });
-});
+// --- (Botón manual de IA eliminado por ser 100% automático) ---
 
 // --- Lógica del Chat Actualizada ---
 function renderMessage(msg) {
-    // 1. INTERCEPTAR MENSAJES DE LA IA
-    if (msg.sender === 'KinSync AI' || msg.sender === 'kinSync AI') {
-        // Reemplazamos los saltos de línea de texto por etiquetas <br> de HTML
-        const formattedContent = msg.content.replace(/\n/g, '<br>');
+    // 1. INTERCEPTAR MENSAJES DE LA IA Y AUTO-FEED
+    if (msg.sender === 'KinSync AI' || msg.sender === 'kinSync AI' || msg.sender === 'KinSync AI AutoFeed 🤖') {
+        
+        // Si es el mensaje de "Pensando"
+        if (msg.content.includes('Pensanding') || msg.content.includes('Generando Feed')) {
+            summaryBox.innerHTML = `<p class="empty-state">⏳ ${msg.content}</p>`;
+            return;
+        }
 
-        // Inyectamos la tarjeta en el panel derecho
-        summaryBox.innerHTML = `
-            <div class="ai-summary-card">
-                <strong>Resumen Inteligente</strong><br><br>
-                ${formattedContent}
-            </div>
-        `;
-        // Saltar a la pestaña automáticamente
-        switchTab(false);
+        // Es el JSON final de los posts
+        try {
+            const posts = JSON.parse(msg.content);
+            let feedHtml = '<h3>Muro de Noticias de la Familia</h3>';
+            
+            posts.forEach(post => {
+                // Pequeños estilos en línea para los posts del feed
+                feedHtml += `
+                    <div class="ai-summary-card" style="margin-bottom: 15px; border-left: 4px solid #4CAF50;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <strong style="font-size: 0.8em; color: #4CAF50;">📌 ${post.post_type}</strong>
+                            <span style="font-size: 0.75em; color: #777;">🕒 ${post.date || 'Reciente'}</span>
+                        </div>
+                        <p style="margin: 8px 0; font-size: 1.1em;">${post.feed_text}</p>
+                        <div style="font-size: 0.8em; color: #888;">
+                            ${post.tags.map(t => `<span>#${t}</span>`).join(' ')}
+                        </div>
+                    </div>
+                `;
+            });
+            summaryBox.innerHTML = feedHtml;
+        } catch (e) {
+            // Fallback de seguridad si Gemini devuelve texto en vez de JSON
+            const formattedContent = msg.content.replace(/\n/g, '<br>');
+            summaryBox.innerHTML = `
+                <div class="ai-summary-card">
+                    <strong>Resumen Inteligente</strong><br><br>
+                    ${formattedContent}
+                </div>
+            `;
+        }
+
+        // Ya NO saltamos agresivamente a la pestaña de Feed si estás chateando
         return; // Salimos de la función para que NO se dibuje en el chat izquierdo
     }
 
